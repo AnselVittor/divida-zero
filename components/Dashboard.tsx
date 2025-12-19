@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-    import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-    import { DashboardStats, UserSettings } from '../types';
-    import { TrendingUp, Wallet, CheckCircle, AlertCircle, PlusCircle, X } from 'lucide-react';
+    import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+    import { DashboardStats, UserSettings, Bill } from '../types';
+    import { TrendingUp, Wallet, CheckCircle, AlertCircle, PlusCircle, X, Check, Clock } from 'lucide-react';
     
     interface DashboardProps {
       stats: DashboardStats;
       settings: UserSettings;
       extraIncome: number;
       onUpdateExtraIncome: (val: number) => void;
+      bills: Bill[];
     }
     
     const COLORS = ['#10b981', '#ef4444']; // Emerald (Paid), Red (Pending)
     
-    export const Dashboard: React.FC<DashboardProps> = ({ stats, settings, extraIncome, onUpdateExtraIncome }) => {
+    export const Dashboard: React.FC<DashboardProps> = ({ stats, settings, extraIncome, onUpdateExtraIncome, bills }) => {
       const [showExtraModal, setShowExtraModal] = useState(false);
       const [tempExtra, setTempExtra] = useState(extraIncome.toString());
 
@@ -23,6 +24,11 @@ import React, { useState } from 'react';
     
       const formatCurrency = (val: number) => 
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+      const formatDate = (dateStr: string) => {
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${y}`;
+      };
       
       const totalAvailable = settings.monthlyIncome + extraIncome;
 
@@ -30,6 +36,20 @@ import React, { useState } from 'react';
           onUpdateExtraIncome(Number(tempExtra));
           setShowExtraModal(false);
       };
+
+      // Filter Current Month Bills
+      const today = new Date();
+      const currentMonthIndex = today.getMonth(); // 0-based
+      const currentYear = today.getFullYear();
+
+      const currentMonthBills = bills.filter(b => {
+        const [y, m] = b.dueDate.split('-').map(Number);
+        // m is 1-based from string split
+        return y === currentYear && (m - 1) === currentMonthIndex;
+      }).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+      const monthName = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(today);
+      const displayMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
     
       return (
         <div className="space-y-6 animate-fadeIn relative">
@@ -97,46 +117,12 @@ import React, { useState } from 'react';
             </div>
           </div>
     
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Progress Bar Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Progresso de Pagamentos</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    layout="vertical" 
-                    data={[
-                        { name: 'Total', value: stats.totalValue },
-                        { name: 'Pago', value: stats.totalPaid }
-                    ]}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" />
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]}>
-                        {
-                            [
-                                { name: 'Total', value: stats.totalValue },
-                                { name: 'Pago', value: stats.totalPaid }
-                            ].map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={index === 0 ? '#e2e8f0' : '#10b981'} />
-                            ))
-                        }
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-center text-sm text-slate-500 mt-2">
-                Você já pagou {stats.percentComplete.toFixed(1)}% das suas dívidas.
-              </p>
-            </div>
-    
-            {/* Pie Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Distribuição</h3>
+          {/* Main Content Row: Chart + List */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Pie Chart Column (1/3 width on desktop) */}
+            <div className="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-full">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">Distribuição de Gastos</h3>
               <div className="h-64">
                  <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -154,10 +140,65 @@ import React, { useState } from 'react';
                       ))}
                     </Pie>
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    <Legend />
+                    <Legend verticalAlign="bottom" height={36}/>
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+            </div>
+
+            {/* Current Month Bills List Column (2/3 width on desktop) */}
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full">
+               <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                   <h3 className="text-lg font-bold text-slate-800">Contas de {displayMonth}</h3>
+                   <span className="text-xs font-semibold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">
+                       {currentMonthBills.length} contas
+                   </span>
+               </div>
+               
+               <div className="overflow-x-auto flex-1">
+                   {currentMonthBills.length > 0 ? (
+                      <table className="w-full text-left">
+                          <thead>
+                              <tr className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold tracking-wider">
+                                  <th className="p-4">Vencimento</th>
+                                  <th className="p-4">Descrição</th>
+                                  <th className="p-4">Valor</th>
+                                  <th className="p-4 text-center">Status</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-sm">
+                              {currentMonthBills.map(bill => (
+                                  <tr key={bill.id} className={`hover:bg-slate-50 transition ${bill.status === 'paid' ? 'opacity-60' : ''}`}>
+                                      <td className="p-4 text-slate-600 font-medium whitespace-nowrap">
+                                          {formatDate(bill.dueDate)}
+                                      </td>
+                                      <td className="p-4 text-slate-800 font-semibold">
+                                          {bill.title}
+                                      </td>
+                                      <td className={`p-4 font-bold whitespace-nowrap ${bill.status === 'paid' ? 'text-emerald-600' : 'text-slate-800'}`}>
+                                          {formatCurrency(bill.value)}
+                                      </td>
+                                      <td className="p-4 text-center">
+                                          {bill.status === 'paid' ? (
+                                              <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold">
+                                                  <Check size={12} /> Pago
+                                              </span>
+                                          ) : (
+                                              <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-md text-xs font-bold">
+                                                  <Clock size={12} /> Pendente
+                                              </span>
+                                          )}
+                                      </td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
+                   ) : (
+                       <div className="p-8 text-center text-slate-400 h-full flex items-center justify-center">
+                           <p>Nenhuma conta encontrada para {displayMonth.toLowerCase()}.</p>
+                       </div>
+                   )}
+               </div>
             </div>
           </div>
 

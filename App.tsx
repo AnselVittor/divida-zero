@@ -176,6 +176,7 @@ const App: React.FC = () => {
             settings={settings} 
             extraIncome={extraIncome}
             onUpdateExtraIncome={setExtraIncome}
+            bills={bills}
           />
         )}
         
