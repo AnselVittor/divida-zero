@@ -47,7 +47,7 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
     <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn relative">
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <div className="flex items-center gap-4 mb-8">
-          <div className="p-4 bg-indigo-100 text-indigo-600 rounded-full">
+          <div className="p-4 bg-emerald-100 text-emerald-600 rounded-full">
             <User size={32} />
           </div>
           <div>
@@ -64,7 +64,7 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
                 type="text"
                 value={formData.userName}
                 onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
-                className="w-full pl-10 p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                className="w-full pl-10 p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition"
                 placeholder="Como gostaria de ser chamado?"
                 required
               />
@@ -79,7 +79,7 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
                 type="number"
                 value={formData.monthlyIncome}
                 onChange={(e) => setFormData({ ...formData, monthlyIncome: Number(e.target.value) })}
-                className="w-full pl-10 p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                className="w-full pl-10 p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition"
                 placeholder="0,00"
                 required
               />
@@ -88,7 +88,7 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
             
             {/* Real-time Feedback */}
             {formData.monthlyIncome > 0 && (
-                <div className="mt-2 text-sm font-medium text-indigo-600 animate-fadeIn">
+                <div className="mt-2 text-sm font-medium text-emerald-600 animate-fadeIn">
                     {getSalaryFeedback(formData.monthlyIncome)}
                 </div>
             )}
@@ -99,9 +99,9 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
           <div className="pt-4">
             <button
               type="submit"
-              className="flex items-center justify-center gap-2 w-full bg-slate-900 text-white p-4 rounded-lg hover:bg-slate-800 transition font-medium text-lg"
+              className="flex items-center justify-center gap-2 w-full bg-emerald-900 text-white p-4 rounded-lg hover:bg-emerald-800 transition font-medium text-lg"
             >
-              {saved ? <span className="text-emerald-400 font-bold">Salvo com Sucesso!</span> : (
+              {saved ? <span className="text-emerald-200 font-bold">Salvo com Sucesso!</span> : (
                 <>
                   <Save size={20} />
                   Salvar Alterações
@@ -117,19 +117,19 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl relative transform transition-all scale-100">
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className="p-4 bg-indigo-100 text-indigo-600 rounded-full mb-2">
+              <div className="p-4 bg-emerald-100 text-emerald-600 rounded-full mb-2">
                 <MessageCircleHeart size={40} />
               </div>
               <h3 className="text-2xl font-bold text-slate-800">Seja bem-vindo(a)!</h3>
               <p className="text-slate-600 leading-relaxed">
-                Seja bem-vindo! Sou o <span className="font-bold text-indigo-600">Anselmo</span>. Desenvolvi esta ferramenta para potencializar seu controle financeiro. Estou sempre em busca de melhorias, então, caso tenha sugestões ou feedbacks, sinta-se à vontade para compartilhar. Ficarei feliz em ouvir sua opinião!
+                Seja bem-vindo! Sou o <span className="font-bold text-emerald-600">Anselmo</span>. Desenvolvi esta ferramenta para potencializar seu controle financeiro. Estou sempre em busca de melhorias, então, caso tenha sugestões ou feedbacks, sinta-se à vontade para compartilhar. Ficarei feliz em ouvir sua opinião!
               </p>
               <button 
                 onClick={() => {
                   setShowWelcome(false);
                   onNavigateToDashboard();
                 }}
-                className="w-full py-3 px-6 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition mt-4"
+                className="w-full py-3 px-6 bg-emerald-900 text-white rounded-xl font-semibold hover:bg-emerald-800 transition mt-4"
               >
                 Vamos começar!
               </button>

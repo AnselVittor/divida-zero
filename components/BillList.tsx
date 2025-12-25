@@ -275,7 +275,7 @@ export const BillList: React.FC<BillListProps> = ({
                 </button>
                 <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition"
                 >
                     <Upload className="w-4 h-4"/>
                     Importar Planilha
@@ -299,7 +299,7 @@ export const BillList: React.FC<BillListProps> = ({
                     placeholder="Ex: Aluguel"
                     value={newBill.title}
                     onChange={e => setNewBill({ ...newBill, title: e.target.value })}
-                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     required
                 />
             </div>
@@ -310,7 +310,7 @@ export const BillList: React.FC<BillListProps> = ({
                     placeholder="0.00"
                     value={newBill.value || ''}
                     onChange={e => setNewBill({ ...newBill, value: Number(e.target.value) })}
-                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     step="0.01"
                     required
                 />
@@ -321,7 +321,7 @@ export const BillList: React.FC<BillListProps> = ({
                     type="date"
                     value={newBill.dueDate}
                     onChange={e => setNewBill({ ...newBill, dueDate: e.target.value })}
-                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     required
                 />
             </div>
@@ -334,7 +334,7 @@ export const BillList: React.FC<BillListProps> = ({
                     id="recurring"
                     checked={newBill.isRecurring}
                     onChange={e => setNewBill({...newBill, isRecurring: e.target.checked})}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
                 />
                 <label htmlFor="recurring" className="text-sm font-medium text-slate-700 flex items-center gap-2">
                     <Repeat className="w-4 h-4 text-slate-500"/>
@@ -351,7 +351,7 @@ export const BillList: React.FC<BillListProps> = ({
                         max="360"
                         value={newBill.recurrenceCount}
                         onChange={e => setNewBill({...newBill, recurrenceCount: Number(e.target.value)})}
-                        className="w-20 p-2 text-center border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-20 p-2 text-center border border-slate-300 rounded-md focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
                     <span className="text-sm text-slate-600">meses</span>
                  </div>
@@ -359,7 +359,7 @@ export const BillList: React.FC<BillListProps> = ({
 
              <button
                 type="submit"
-                className="ml-auto bg-slate-900 text-white px-6 py-2.5 rounded-lg hover:bg-slate-800 transition font-medium w-full md:w-auto"
+                className="ml-auto bg-emerald-900 text-white px-6 py-2.5 rounded-lg hover:bg-emerald-800 transition font-medium w-full md:w-auto"
             >
                 Adicionar Conta(s)
             </button>
@@ -397,7 +397,7 @@ export const BillList: React.FC<BillListProps> = ({
                             <span className="truncate max-w-[150px]">{bill.barcode}</span>
                             <button 
                                 onClick={() => navigator.clipboard.writeText(bill.barcode || '')}
-                                className="hover:text-blue-500"
+                                className="hover:text-emerald-500"
                                 title="Copiar código de barras"
                             >
                                 <Copy size={12} />
@@ -441,7 +441,7 @@ export const BillList: React.FC<BillListProps> = ({
                                     receiptInputRef.current?.click();
                                 }
                             }}
-                            className={`p-2 rounded-lg transition ${bill.receiptAttachment ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400 hover:text-slate-600'}`}
+                            className={`p-2 rounded-lg transition ${bill.receiptAttachment ? 'bg-teal-100 text-teal-600' : 'bg-slate-100 text-slate-400 hover:text-slate-600'}`}
                             title={bill.receiptAttachment ? "Ver Comprovante" : "Anexar Comprovante"}
                           >
                             <Paperclip size={18} />

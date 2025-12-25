@@ -68,11 +68,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ bills }) => {
             <div 
               key={day} 
               className={`min-h-[100px] p-2 rounded-lg border transition ${
-                isToday ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-slate-50'
+                isToday ? 'border-emerald-500 bg-emerald-50' : 'border-slate-100 bg-slate-50'
               }`}
             >
               <div className="flex justify-between items-start">
-                <span className={`text-sm font-bold ${isToday ? 'text-blue-600' : 'text-slate-500'}`}>{day}</span>
+                <span className={`text-sm font-bold ${isToday ? 'text-emerald-700' : 'text-slate-500'}`}>{day}</span>
               </div>
               <div className="mt-2 space-y-1">
                 {dayBills.map(bill => (

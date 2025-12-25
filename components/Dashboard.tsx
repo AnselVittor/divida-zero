@@ -11,7 +11,7 @@ import React, { useState } from 'react';
       bills: Bill[];
     }
     
-    const COLORS = ['#10b981', '#ef4444']; // Emerald (Paid), Red (Pending)
+    const COLORS = ['#10b981', '#f43f5e']; // Emerald (Paid), Rose (Pending)
     
     export const Dashboard: React.FC<DashboardProps> = ({ stats, settings, extraIncome, onUpdateExtraIncome, bills }) => {
       const [showExtraModal, setShowExtraModal] = useState(false);
@@ -56,7 +56,7 @@ import React, { useState } from 'react';
           {/* Header Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4 relative overflow-hidden group">
-              <div className="p-3 bg-blue-100 text-blue-600 rounded-full z-10">
+              <div className="p-3 bg-teal-100 text-teal-600 rounded-full z-10">
                 <Wallet size={24} />
               </div>
               <div className="z-10 flex-1">
@@ -64,7 +64,7 @@ import React, { useState } from 'react';
                     <p className="text-sm text-slate-500 font-medium">Renda Mensal Total</p>
                     <button 
                         onClick={() => setShowExtraModal(true)}
-                        className="text-blue-600 hover:bg-blue-50 p-1 rounded-full transition"
+                        className="text-teal-600 hover:bg-teal-50 p-1 rounded-full transition"
                         title="Adicionar valor extra este mês"
                     >
                         <PlusCircle size={18} />
@@ -105,12 +105,12 @@ import React, { useState } from 'react';
             </div>
     
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
-              <div className={`p-3 rounded-full ${stats.leftover >= 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-red-100 text-red-600'}`}>
+              <div className={`p-3 rounded-full ${stats.leftover >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
                 <TrendingUp size={24} />
               </div>
               <div>
                 <p className="text-sm text-slate-500 font-medium">Projeção de Sobra</p>
-                <p className={`text-xl font-bold ${stats.leftover >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>
+                <p className={`text-xl font-bold ${stats.leftover >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
                   {formatCurrency(stats.leftover)}
                 </p>
               </div>
@@ -222,7 +222,7 @@ import React, { useState } from 'react';
                                 type="number" 
                                 value={tempExtra} 
                                 onChange={(e) => setTempExtra(e.target.value)}
-                                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-lg font-semibold text-indigo-600"
+                                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-lg font-semibold text-emerald-700"
                                 autoFocus
                             />
                         </div>
@@ -239,7 +239,7 @@ import React, { useState } from 'react';
                             </button>
                             <button 
                                 onClick={handleSaveExtra}
-                                className="flex-1 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
+                                className="flex-1 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition"
                             >
                                 Confirmar
                             </button>
