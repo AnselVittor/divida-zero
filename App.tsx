@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bill, DashboardStats, UserSettings } from './types';
+import { Bill, UserSettings } from './types';
 import { Dashboard } from './components/Dashboard';
 import { BillList } from './components/BillList';
 import { CalendarView } from './components/CalendarView';
@@ -15,20 +15,6 @@ const App: React.FC = () => {
     monthlyIncome: 0
   });
   const [extraIncome, setExtraIncome] = useState<number>(0);
-
-  // Calculate Stats
-  const totalIncome = settings.monthlyIncome + extraIncome;
-  
-  const stats: DashboardStats = {
-    totalPending: bills.filter(b => b.status === 'pending').length,
-    totalPaid: bills.filter(b => b.status === 'paid').reduce((acc, curr) => acc + curr.value, 0),
-    totalValue: bills.reduce((acc, curr) => acc + curr.value, 0),
-    remainingValue: bills.filter(b => b.status === 'pending').reduce((acc, curr) => acc + curr.value, 0),
-    percentComplete: 0,
-    leftover: totalIncome - bills.reduce((acc, curr) => acc + curr.value, 0)
-  };
-
-  stats.percentComplete = stats.totalValue > 0 ? (stats.totalPaid / stats.totalValue) * 100 : 0;
 
   // Effects
   useEffect(() => {
@@ -172,7 +158,6 @@ const App: React.FC = () => {
 
         {activeTab === 'dashboard' && (
           <Dashboard 
-            stats={stats} 
             settings={settings} 
             extraIncome={extraIncome}
             onUpdateExtraIncome={setExtraIncome}
