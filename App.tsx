@@ -6,8 +6,9 @@ import { Dashboard } from './components/Dashboard';
 import { BillList } from './components/BillList';
 import { CalendarView } from './components/CalendarView';
 import { Profile } from './components/Profile';
+import { db, supabase } from './services/supabase'; // Importação do serviço Supabase
 import confetti from 'canvas-confetti';
-import { LayoutDashboard, List, Calendar as CalendarIcon, WalletMinimal, User, Loader2 } from 'lucide-react';
+import { LayoutDashboard, List, Calendar as CalendarIcon, WalletMinimal, User, Loader2, Database } from 'lucide-react';
 
 const AuthenticatedApp: React.FC = () => {
   const { user, isLoaded: isUserLoaded } = useUser();
@@ -21,65 +22,126 @@ const AuthenticatedApp: React.FC = () => {
   });
   const [extraIncome, setExtraIncome] = useState<number>(0);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // Load Data from LocalStorage (Scoped by User ID)
+  // Load Data
   useEffect(() => {
     if (!isUserLoaded || !user) return;
 
-    // We use the User ID to create unique keys for this user's data
-    const userId = user.id;
-    const billsKey = `fin-bills-${userId}`;
-    const settingsKey = `fin-settings-${userId}`;
-    const extraKey = `fin-extra-income-${userId}`;
+    const loadData = async () => {
+        setIsSyncing(true);
+        const userId = user.id;
 
-    const savedBills = localStorage.getItem(billsKey);
-    if (savedBills) setBills(JSON.parse(savedBills));
+        // 1. Tenta carregar do Supabase se estiver configurado
+        if (supabase) {
+            try {
+                const dbBills = await db.getBills(userId);
+                const dbSettings = await db.getUserSettings(userId);
 
-    const savedSettings = localStorage.getItem(settingsKey);
-    if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
-    } else {
-        // Default to Clerk name if no settings found
-        setSettings(prev => ({ ...prev, userName: user.firstName || '' }));
-    }
+                if (dbBills) setBills(dbBills);
+                if (dbSettings) {
+                    setSettings(dbSettings.settings);
+                    setExtraIncome(dbSettings.extraIncome);
+                } else {
+                    // Se não tiver settings no banco, tenta pegar o nome do Clerk
+                    setSettings(prev => ({ ...prev, userName: user.firstName || '' }));
+                }
+                
+                // Se conseguimos conectar, finaliza aqui
+                setDataLoaded(true);
+                setIsSyncing(false);
+                return; 
+            } catch (err) {
+                console.error("Erro ao conectar Supabase, usando LocalStorage", err);
+            }
+        }
 
-    const savedExtra = localStorage.getItem(extraKey);
-    if (savedExtra) setExtraIncome(Number(savedExtra));
-    
-    setDataLoaded(true);
+        // 2. Fallback para LocalStorage (Se Supabase não configurado ou erro)
+        const billsKey = `fin-bills-${userId}`;
+        const settingsKey = `fin-settings-${userId}`;
+        const extraKey = `fin-extra-income-${userId}`;
+
+        const savedBills = localStorage.getItem(billsKey);
+        if (savedBills) setBills(JSON.parse(savedBills));
+
+        const savedSettings = localStorage.getItem(settingsKey);
+        if (savedSettings) {
+            setSettings(JSON.parse(savedSettings));
+        } else {
+            setSettings(prev => ({ ...prev, userName: user.firstName || '' }));
+        }
+
+        const savedExtra = localStorage.getItem(extraKey);
+        if (savedExtra) setExtraIncome(Number(savedExtra));
+        
+        setDataLoaded(true);
+        setIsSyncing(false);
+    };
+
+    loadData();
   }, [isUserLoaded, user]);
 
-  // Save Data to LocalStorage (Scoped by User ID)
-  useEffect(() => {
-    if (dataLoaded && user) {
-        const userId = user.id;
-        localStorage.setItem(`fin-bills-${userId}`, JSON.stringify(bills));
-        localStorage.setItem(`fin-settings-${userId}`, JSON.stringify(settings));
-        localStorage.setItem(`fin-extra-income-${userId}`, extraIncome.toString());
-    }
-  }, [bills, settings, extraIncome, dataLoaded, user]);
+  // Save Data Logic
+  const saveData = async (newBills: Bill[], newSettings: UserSettings, newExtra: number) => {
+      if (!user) return;
+      const userId = user.id;
 
-  const addBill = (bill: Bill) => {
-    setBills(prev => [...prev, bill]);
-  };
+      // Update State
+      setBills(newBills);
+      setSettings(newSettings);
+      setExtraIncome(newExtra);
 
-  const updateBill = (bill: Bill) => {
-    setBills(prev => prev.map(b => b.id === bill.id ? bill : b));
-  };
-
-  const deleteBill = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta conta?')) {
-      setBills(prev => prev.filter(b => b.id !== id));
-    }
-  };
-
-  const payBill = (id: string) => {
-    setBills(prev => prev.map(b => {
-      if (b.id === id) {
-        return { ...b, status: 'paid' };
+      // Save to Supabase
+      if (supabase) {
+          // Salvamos de forma assíncrona sem bloquear a UI (Fire and Forget)
+          db.saveUserSettings(userId, newSettings, newExtra);
+          // Para bills, idealmente salvaríamos apenas o alterado, mas por simplicidade aqui salvamos no componente específico
       }
-      return b;
-    }));
+
+      // Save to LocalStorage (Always keep a local backup)
+      localStorage.setItem(`fin-bills-${userId}`, JSON.stringify(newBills));
+      localStorage.setItem(`fin-settings-${userId}`, JSON.stringify(newSettings));
+      localStorage.setItem(`fin-extra-income-${userId}`, newExtra.toString());
+  };
+
+  const addBill = async (bill: Bill) => {
+    const updatedBills = [...bills, bill];
+    setBills(updatedBills); // UI Update instantâneo
+    
+    if (user) {
+        localStorage.setItem(`fin-bills-${user.id}`, JSON.stringify(updatedBills));
+        if (supabase) await db.saveBill(user.id, bill);
+    }
+  };
+
+  const updateBill = async (bill: Bill) => {
+    const updatedBills = bills.map(b => b.id === bill.id ? bill : b);
+    setBills(updatedBills);
+
+    if (user) {
+        localStorage.setItem(`fin-bills-${user.id}`, JSON.stringify(updatedBills));
+        if (supabase) await db.saveBill(user.id, bill);
+    }
+  };
+
+  const deleteBill = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta conta?')) {
+      const updatedBills = bills.filter(b => b.id !== id);
+      setBills(updatedBills);
+
+      if (user) {
+          localStorage.setItem(`fin-bills-${user.id}`, JSON.stringify(updatedBills));
+          if (supabase) await db.deleteBill(id);
+      }
+    }
+  };
+
+  const payBill = async (id: string) => {
+    const targetBill = bills.find(b => b.id === id);
+    if (!targetBill) return;
+
+    const updatedBill = { ...targetBill, status: 'paid' as const };
+    await updateBill(updatedBill);
 
     confetti({
       particleCount: 100,
@@ -95,10 +157,19 @@ const AuthenticatedApp: React.FC = () => {
     setTimeout(() => document.body.removeChild(msg), 3000);
   };
 
-  if (!isUserLoaded) {
+  const handleUpdateSettings = (newSettings: UserSettings) => {
+      saveData(bills, newSettings, extraIncome);
+  };
+
+  const handleUpdateExtra = (newExtra: number) => {
+      saveData(bills, settings, newExtra);
+  };
+
+  if (!isUserLoaded || !dataLoaded) {
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-            <Loader2 className="animate-spin text-emerald-600 w-8 h-8" />
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center flex-col gap-4">
+            <Loader2 className="animate-spin text-emerald-600 w-10 h-10" />
+            <p className="text-slate-500 font-medium animate-pulse">Carregando suas finanças...</p>
         </div>
       );
   }
@@ -149,6 +220,13 @@ const AuthenticatedApp: React.FC = () => {
         </div>
 
         <div className="hidden md:flex flex-col gap-2 pt-4 border-t border-slate-100">
+            {/* Database Indicator */}
+            {supabase && (
+                <div className="flex items-center gap-2 px-3 py-1 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-[10px] text-slate-400 font-medium">Supabase Conectado</span>
+                </div>
+            )}
             <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50">
                 <UserButton afterSignOutUrl="/" showName />
                 <div className="flex flex-col">
@@ -190,7 +268,7 @@ const AuthenticatedApp: React.FC = () => {
           <Dashboard 
             settings={settings} 
             extraIncome={extraIncome}
-            onUpdateExtraIncome={setExtraIncome}
+            onUpdateExtraIncome={handleUpdateExtra}
             bills={bills}
           />
         )}
@@ -212,7 +290,7 @@ const AuthenticatedApp: React.FC = () => {
         {activeTab === 'profile' && (
           <Profile 
             settings={settings}
-            onUpdateSettings={setSettings}
+            onUpdateSettings={handleUpdateSettings}
             onNavigateToDashboard={() => setActiveTab('dashboard')}
           />
         )}
@@ -222,7 +300,7 @@ const AuthenticatedApp: React.FC = () => {
 };
 
 const App = () => {
-    // CHAVE CLERK HARDCODED
+    // CHAVE CLERK HARDCODED (Mantida conforme solicitado)
     const clerkPubKey = "pk_test_anVzdC1mYXduLTk3LmNsZXJrLmFjY291bnRzLmRldiQ";
 
     return (
