@@ -27,8 +27,8 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
     } else {
       setTimeout(() => {
         setSaved(false);
-        onNavigateToDashboard();
-      }, 1000);
+        // We stay on profile to let them see "Saved" message
+      }, 2000);
     }
   };
 
@@ -121,7 +121,7 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
               </div>
               <h3 className="text-2xl font-bold text-slate-800">Seja bem-vindo(a)!</h3>
               <p className="text-slate-600 leading-relaxed">
-                Conta configurada com sucesso! Seus dados estão salvos neste dispositivo.
+                Conta configurada com sucesso! Seus dados estão salvos em nuvem segura.
               </p>
               <button 
                 onClick={() => {
