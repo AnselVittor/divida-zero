@@ -7,14 +7,7 @@ import { BillList } from './components/BillList';
 import { CalendarView } from './components/CalendarView';
 import { Profile } from './components/Profile';
 import confetti from 'canvas-confetti';
-import { LayoutDashboard, List, Calendar as CalendarIcon, WalletMinimal, User, Loader2, KeyRound } from 'lucide-react';
-
-// Tenta obter a chave do ambiente (arquivo .env) ou do armazenamento local do navegador
-const getClerkKey = () => {
-  const envKey = process.env.CLERK_PUBLISHABLE_KEY;
-  const storedKey = localStorage.getItem('fin-clerk-key');
-  return envKey || storedKey;
-};
+import { LayoutDashboard, List, Calendar as CalendarIcon, WalletMinimal, User, Loader2 } from 'lucide-react';
 
 const AuthenticatedApp: React.FC = () => {
   const { user, isLoaded: isUserLoaded } = useUser();
@@ -229,58 +222,8 @@ const AuthenticatedApp: React.FC = () => {
 };
 
 const App = () => {
-    const clerkPubKey = getClerkKey();
-    const [manualKey, setManualKey] = useState('');
-
-    const handleSaveKey = () => {
-        if(manualKey.trim().startsWith('pk_test_anVzdC1mYXduLTk3LmNsZXJrLmFjY291bnRzLmRldiQ')) {
-            localStorage.setItem('fin-clerk-key', manualKey.trim());
-            window.location.reload();
-        } else {
-            alert('A chave deve começar com "pk_"');
-        }
-    };
-
-    if (!clerkPubKey) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans">
-                <div className="bg-white p-8 rounded-xl shadow-xl border border-slate-100 max-w-md w-full animate-fadeIn">
-                    <div className="flex justify-center mb-6">
-                        <div className="p-4 bg-emerald-100 text-emerald-600 rounded-2xl shadow-sm">
-                            <KeyRound size={32} />
-                        </div>
-                    </div>
-                    <h2 className="text-slate-800 font-bold text-xl mb-2 text-center">Configuração Inicial</h2>
-                    <p className="text-slate-500 text-sm text-center mb-6">
-                        Não encontramos o arquivo <code>.env</code>. Para conectar ao sistema de login, insira sua <strong>Publishable Key</strong> do Clerk abaixo.
-                    </p>
-                    
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">Clerk Publishable Key</label>
-                            <input 
-                                type="text" 
-                                value={manualKey}
-                                onChange={(e) => setManualKey(e.target.value)}
-                                placeholder="pk_test_..."
-                                className="w-full p-3 border border-slate-200 rounded-lg mt-1 focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-sm text-slate-700"
-                            />
-                        </div>
-                        <button 
-                            onClick={handleSaveKey}
-                            className="w-full bg-emerald-900 text-white py-3 rounded-lg font-semibold hover:bg-emerald-800 transition shadow-lg shadow-emerald-900/20"
-                        >
-                            Salvar e Continuar
-                        </button>
-                    </div>
-                    
-                    <p className="text-xs text-slate-400 mt-6 text-center border-t border-slate-100 pt-4">
-                        Essa chave ficará salva neste navegador para facilitar seus testes.
-                    </p>
-                </div>
-            </div>
-        );
-    }
+    // CHAVE CLERK HARDCODED
+    const clerkPubKey = "pk_test_anVzdC1mYXduLTk3LmNsZXJrLmFjY291bnRzLmRldiQ";
 
     return (
         <ClerkProvider publishableKey={clerkPubKey} localization={ptBR}>
