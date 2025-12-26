@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { ClerkProvider, SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/clerk-react';
+import { ptBR } from '@clerk/localizations';
 import { Bill, UserSettings } from './types';
 import { Dashboard } from './components/Dashboard';
 import { BillList } from './components/BillList';
 import { CalendarView } from './components/CalendarView';
 import { Profile } from './components/Profile';
 import confetti from 'canvas-confetti';
-import { LayoutDashboard, List, Calendar as CalendarIcon, WalletMinimal, User } from 'lucide-react';
+import { LayoutDashboard, List, Calendar as CalendarIcon, WalletMinimal, User, Loader2, KeyRound } from 'lucide-react';
 
-const App: React.FC = () => {
+// Tenta obter a chave do ambiente (arquivo .env) ou do armazenamento local do navegador
+const getClerkKey = () => {
+  const envKey = process.env.CLERK_PUBLISHABLE_KEY;
+  const storedKey = localStorage.getItem('fin-clerk-key');
+  return envKey || storedKey;
+};
+
+const AuthenticatedApp: React.FC = () => {
+  const { user, isLoaded: isUserLoaded } = useUser();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'bills' | 'calendar' | 'profile'>('dashboard');
   
   // Data States
@@ -19,11 +29,15 @@ const App: React.FC = () => {
   const [extraIncome, setExtraIncome] = useState<number>(0);
   const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Load Data from LocalStorage
+  // Load Data from LocalStorage (Scoped by User ID)
   useEffect(() => {
-    const billsKey = 'fin-bills';
-    const settingsKey = 'fin-settings';
-    const extraKey = 'fin-extra-income';
+    if (!isUserLoaded || !user) return;
+
+    // We use the User ID to create unique keys for this user's data
+    const userId = user.id;
+    const billsKey = `fin-bills-${userId}`;
+    const settingsKey = `fin-settings-${userId}`;
+    const extraKey = `fin-extra-income-${userId}`;
 
     const savedBills = localStorage.getItem(billsKey);
     if (savedBills) setBills(JSON.parse(savedBills));
@@ -31,22 +45,26 @@ const App: React.FC = () => {
     const savedSettings = localStorage.getItem(settingsKey);
     if (savedSettings) {
         setSettings(JSON.parse(savedSettings));
+    } else {
+        // Default to Clerk name if no settings found
+        setSettings(prev => ({ ...prev, userName: user.firstName || '' }));
     }
 
     const savedExtra = localStorage.getItem(extraKey);
     if (savedExtra) setExtraIncome(Number(savedExtra));
     
     setDataLoaded(true);
-  }, []);
+  }, [isUserLoaded, user]);
 
-  // Save Data to LocalStorage
+  // Save Data to LocalStorage (Scoped by User ID)
   useEffect(() => {
-    if (dataLoaded) {
-        localStorage.setItem('fin-bills', JSON.stringify(bills));
-        localStorage.setItem('fin-settings', JSON.stringify(settings));
-        localStorage.setItem('fin-extra-income', extraIncome.toString());
+    if (dataLoaded && user) {
+        const userId = user.id;
+        localStorage.setItem(`fin-bills-${userId}`, JSON.stringify(bills));
+        localStorage.setItem(`fin-settings-${userId}`, JSON.stringify(settings));
+        localStorage.setItem(`fin-extra-income-${userId}`, extraIncome.toString());
     }
-  }, [bills, settings, extraIncome, dataLoaded]);
+  }, [bills, settings, extraIncome, dataLoaded, user]);
 
   const addBill = (bill: Bill) => {
     setBills(prev => [...prev, bill]);
@@ -83,6 +101,14 @@ const App: React.FC = () => {
     document.body.appendChild(msg);
     setTimeout(() => document.body.removeChild(msg), 3000);
   };
+
+  if (!isUserLoaded) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <Loader2 className="animate-spin text-emerald-600 w-8 h-8" />
+        </div>
+      );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
@@ -128,6 +154,15 @@ const App: React.FC = () => {
             <span className="text-xs md:text-base mt-1 md:mt-0">Perfil</span>
             </button>
         </div>
+
+        <div className="hidden md:flex flex-col gap-2 pt-4 border-t border-slate-100">
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50">
+                <UserButton afterSignOutUrl="/" showName />
+                <div className="flex flex-col">
+                     <span className="text-xs font-semibold text-slate-700">Conta</span>
+                </div>
+            </div>
+        </div>
       </nav>
 
       {/* Main Content */}
@@ -135,7 +170,7 @@ const App: React.FC = () => {
         <header className="mb-8 flex justify-between items-center">
             <div>
                 <h2 className="text-2xl font-bold text-slate-900">
-                {activeTab === 'dashboard' && `Olá, ${settings.userName || 'Visitante'}`}
+                {activeTab === 'dashboard' && `Olá, ${settings.userName || user?.firstName || 'Visitante'}`}
                 {activeTab === 'bills' && 'Gerenciar Contas'}
                 {activeTab === 'calendar' && 'Calendário de Pagamentos'}
                 {activeTab === 'profile' && 'Meu Perfil'}
@@ -145,12 +180,15 @@ const App: React.FC = () => {
                 </p>
             </div>
             
-            <div 
-              onClick={() => setActiveTab('profile')}
-              className="relative w-10 h-10 rounded-full border border-emerald-200 cursor-pointer hover:ring-2 hover:ring-emerald-300 transition overflow-hidden"
-            >
-                <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold">
-                    {settings.userName ? settings.userName.charAt(0).toUpperCase() : 'U'}
+            {/* Mobile User Button */}
+            <div className="md:hidden">
+                <UserButton />
+            </div>
+
+            {/* Desktop Quick Profile Access */}
+            <div className="hidden md:block relative w-10 h-10 cursor-pointer">
+                <div className="absolute right-0">
+                    <UserButton />
                 </div>
             </div>
         </header>
@@ -188,6 +226,83 @@ const App: React.FC = () => {
       </main>
     </div>
   );
+};
+
+const App = () => {
+    const clerkPubKey = getClerkKey();
+    const [manualKey, setManualKey] = useState('');
+
+    const handleSaveKey = () => {
+        if(manualKey.trim().startsWith('pk_test_anVzdC1mYXduLTk3LmNsZXJrLmFjY291bnRzLmRldiQ')) {
+            localStorage.setItem('fin-clerk-key', manualKey.trim());
+            window.location.reload();
+        } else {
+            alert('A chave deve começar com "pk_"');
+        }
+    };
+
+    if (!clerkPubKey) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans">
+                <div className="bg-white p-8 rounded-xl shadow-xl border border-slate-100 max-w-md w-full animate-fadeIn">
+                    <div className="flex justify-center mb-6">
+                        <div className="p-4 bg-emerald-100 text-emerald-600 rounded-2xl shadow-sm">
+                            <KeyRound size={32} />
+                        </div>
+                    </div>
+                    <h2 className="text-slate-800 font-bold text-xl mb-2 text-center">Configuração Inicial</h2>
+                    <p className="text-slate-500 text-sm text-center mb-6">
+                        Não encontramos o arquivo <code>.env</code>. Para conectar ao sistema de login, insira sua <strong>Publishable Key</strong> do Clerk abaixo.
+                    </p>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Clerk Publishable Key</label>
+                            <input 
+                                type="text" 
+                                value={manualKey}
+                                onChange={(e) => setManualKey(e.target.value)}
+                                placeholder="pk_test_..."
+                                className="w-full p-3 border border-slate-200 rounded-lg mt-1 focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-sm text-slate-700"
+                            />
+                        </div>
+                        <button 
+                            onClick={handleSaveKey}
+                            className="w-full bg-emerald-900 text-white py-3 rounded-lg font-semibold hover:bg-emerald-800 transition shadow-lg shadow-emerald-900/20"
+                        >
+                            Salvar e Continuar
+                        </button>
+                    </div>
+                    
+                    <p className="text-xs text-slate-400 mt-6 text-center border-t border-slate-100 pt-4">
+                        Essa chave ficará salva neste navegador para facilitar seus testes.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <ClerkProvider publishableKey={clerkPubKey} localization={ptBR}>
+            <SignedOut>
+                <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+                    <div className="mb-8 text-center animate-fadeIn">
+                         <div className="inline-flex bg-emerald-900 p-4 rounded-2xl mb-4 shadow-xl">
+                            <WalletMinimal size={40} className="text-white" />
+                         </div>
+                         <h1 className="text-3xl font-bold text-slate-800">Dívida Zero</h1>
+                         <p className="text-slate-500 mt-2">Organize suas finanças em um só lugar.</p>
+                    </div>
+                    <div className="bg-white p-2 rounded-2xl shadow-lg border border-slate-100">
+                        <SignIn routing="hash" />
+                    </div>
+                </div>
+            </SignedOut>
+            <SignedIn>
+                <AuthenticatedApp />
+            </SignedIn>
+        </ClerkProvider>
+    );
 };
 
 export default App;
