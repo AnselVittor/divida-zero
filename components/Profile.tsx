@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
 import { UserSettings } from '../types';
-import { User, Wallet, Save, MessageCircleHeart, LogOut, Shield } from 'lucide-react';
+import { User, Wallet, Save, MessageCircleHeart } from 'lucide-react';
 
 interface ProfileProps {
   settings: UserSettings;
@@ -10,7 +9,6 @@ interface ProfileProps {
 }
 
 export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, onNavigateToDashboard }) => {
-  const { user, logout } = useAuth0();
   const [formData, setFormData] = useState(settings);
   const [saved, setSaved] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -46,36 +44,6 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn relative pb-10">
       
-      {/* Auth0 Info Card */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-100">
-                  {user?.picture ? (
-                      <img src={user.picture} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                      <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                          <User className="text-slate-400" />
-                      </div>
-                  )}
-              </div>
-              <div>
-                  <p className="text-sm text-slate-500 font-medium">Conta conectada</p>
-                  <p className="font-bold text-slate-800">{user?.email}</p>
-                  <div className="flex items-center gap-1 text-xs text-emerald-600 mt-1">
-                      <Shield size={12} />
-                      <span>Protegido por Auth0</span>
-                  </div>
-              </div>
-          </div>
-          <button 
-            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-            className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition text-sm font-medium flex items-center gap-2"
-          >
-              <LogOut size={16} />
-              Sair
-          </button>
-      </div>
-
       <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
         <div className="flex items-center gap-4 mb-8">
           <div className="p-4 bg-emerald-100 text-emerald-600 rounded-full">
@@ -96,7 +64,7 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
                 value={formData.userName}
                 onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
                 className="w-full pl-10 p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                placeholder={user?.given_name || "Seu nome"}
+                placeholder="Seu nome"
                 required
               />
               <User className="absolute left-3 top-3.5 text-slate-400 w-5 h-5" />
@@ -153,7 +121,7 @@ export const Profile: React.FC<ProfileProps> = ({ settings, onUpdateSettings, on
               </div>
               <h3 className="text-2xl font-bold text-slate-800">Seja bem-vindo(a)!</h3>
               <p className="text-slate-600 leading-relaxed">
-                Conta configurada com sucesso! Seus dados agora estão vinculados ao seu login e seguros.
+                Conta configurada com sucesso! Seus dados estão salvos neste dispositivo.
               </p>
               <button 
                 onClick={() => {
